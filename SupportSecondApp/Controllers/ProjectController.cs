@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SupportSecondApp.Data;
 using SupportSecondApp.Models;
+using SupportSecondApp.Repositories;
 
 namespace SupportSecondApp.Controllers
 {
@@ -10,17 +11,17 @@ namespace SupportSecondApp.Controllers
     [ApiController]
     public class ProjectController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProjectRepository _projectRepository;
 
-        public ProjectController(ApplicationDbContext context)
+        public ProjectController(IProjectRepository projectRepository)
         {
-            _context = context;
+            _projectRepository = projectRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<Project>>> GetAllProjects()
         {
-            var projects = await _context.Projects.ToListAsync();
+            var projects = await _projectRepository.GetAllProjects();
             return Ok(projects);
         }
     }
