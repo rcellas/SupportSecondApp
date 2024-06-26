@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SupportSecondApp.Data;
+using SupportSecondApp.DTOs;
 using SupportSecondApp.Models;
 using SupportSecondApp.Repositories;
 
@@ -12,17 +11,19 @@ namespace SupportSecondApp.Controllers
     public class ProjectController : ControllerBase
     {
         private readonly IProjectRepository _projectRepository;
-
-        public ProjectController(IProjectRepository projectRepository)
+        private readonly IMapper _mapper;
+        public ProjectController(IProjectRepository projectRepository, IMapper mapper)
         {
             _projectRepository = projectRepository;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Project>>> GetAllProjects()
+        public async Task<ActionResult<List<ProjectDto>>> GetAllProjects()
         {
             var projects = await _projectRepository.GetAllProjects();
-            return Ok(projects);
+            var projectsDto = _mapper.Map<List<Project>>(projects);
+            return Ok(projectsDto);
         }
     }
 }
