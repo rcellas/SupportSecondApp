@@ -3,19 +3,17 @@ using SupportSecondApp.Models;
 
 namespace SupportSecondApp.DTOs;
 
-public class ProjectDto
+public class SupportTaskDto
 {
     [Key]
     public int Id { get; set; }
     
     [StringLength(50), Required]
     public required string Name { get; set; }
-
-    [StringLength(500), Required]
-    public required string Description { get; set; }
     
     public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; } = null;
+    public DateTime? EndDate { get; set; }
     
-    public ICollection<SupportTask> SupportTasks { get; set; } = new List<SupportTask>();
+    public int ProjectId { get; set; }
+    public Project Project { get; set; } = null!;
 }

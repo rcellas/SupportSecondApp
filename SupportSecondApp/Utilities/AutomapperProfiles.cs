@@ -9,5 +9,7 @@ public class AutomapperProfiles : Profile
     public AutomapperProfiles()
     {
         CreateMap<Project, ProjectDto>();
+        CreateMap<ProjectCreateDto, Project>();
+        CreateMap<SupportTask, SupportTaskDto>();
     }
 }

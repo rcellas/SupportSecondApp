@@ -15,6 +15,14 @@ public class ProjectRepository : IProjectRepository
 
     public async Task<List<Project>> GetAllProjects()
     {
-        return await _context.Projects.ToListAsync();
+        return await _context.Projects.Include( x => x.SupportTasks).ToListAsync();
+    }
+
+    public async Task<int> CreateProject( Project project )
+    {
+        _context.Add(project);
+        await _context.SaveChangesAsync();
+
+        return project.Id;
     }
 }

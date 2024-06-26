@@ -25,5 +25,16 @@ namespace SupportSecondApp.Controllers
             var projectsDto = _mapper.Map<List<Project>>(projects);
             return Ok(projectsDto);
         }
+
+        [HttpPost]
+        public async Task<ActionResult<ProjectCreateDto>> CreateProject(ProjectCreateDto projectToCreate)
+        {
+            var project = _mapper.Map<Project>(projectToCreate);
+            var projectId = await _projectRepository.CreateProject(project);
+
+            return Ok(projectId);
+        }
+        
+        
     }
 }
