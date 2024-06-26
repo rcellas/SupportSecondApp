@@ -13,7 +13,7 @@ public class ProjectRepository : IProjectRepository
         _context = context;
     }
 
-    public async Task<List<Project>> GetAllProjects()
+    public async Task<IEnumerable<Project>> GetAllProjects()
     {
         return await _context.Projects.Include( x => x.SupportTasks).ToListAsync();
     }

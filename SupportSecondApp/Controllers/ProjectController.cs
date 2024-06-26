@@ -19,10 +19,10 @@ namespace SupportSecondApp.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<ProjectDto>>> GetAllProjects()
+        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetAllProjects()
         {
             var projects = await _projectRepository.GetAllProjects();
-            var projectsDto = _mapper.Map<List<Project>>(projects);
+            var projectsDto = _mapper.Map<IEnumerable<Project>>(projects);
             return Ok(projectsDto);
         }
 

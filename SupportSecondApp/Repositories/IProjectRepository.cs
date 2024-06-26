@@ -4,6 +4,6 @@ namespace SupportSecondApp.Repositories;
 
 public interface IProjectRepository
 {
-    Task<List<Project>> GetAllProjects();
+    Task<IEnumerable<Project>> GetAllProjects();
     Task<int> CreateProject( Project project );
 }

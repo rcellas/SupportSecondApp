@@ -16,6 +16,6 @@ public class ProjectDto
     
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; } = null;
-    
-    public ICollection<SupportTask> SupportTasks { get; set; } = new List<SupportTask>();
+
+    public List<SupportTaskDto> SupportTasks { get; set; } = new List<SupportTaskDto>();
 }

@@ -15,7 +15,15 @@ public class SupportTaskRepository : ISupportTaskRepository
 
     public async Task<List<SupportTask>> GetAllSupportTasks()
     {
-        return await _context.SupportTasks.ToListAsync();
+        return await _context.SupportTasks.AsNoTracking().ToListAsync();
+    }
+
+    public async Task<int> CreateSupportTask( SupportTask supportTask )
+    {
+        _context.Add( supportTask );
+        await _context.SaveChangesAsync();
+
+        return supportTask.Id;
     }
     
 }

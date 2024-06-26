@@ -29,5 +29,15 @@ namespace SupportSecondApp.Controllers
 
             return Ok(supportTasksDtos);
         }
+
+        [HttpPost]
+        public async Task<ActionResult<int>> CreateSupportTask(SupportTaskCreateDto supportTaskToCreate, int projectId)
+        {
+            var supportTask = _mapper.Map<SupportTask>(supportTaskToCreate);
+            supportTask.ProjectId = projectId;
+            var supportTaskId = await _supportTaskRepository.CreateSupportTask(supportTask);
+
+            return Ok(supportTaskId);
+        }
     }
 }
