@@ -1,7 +1,12 @@
 using System.Text.Json.Serialization;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SupportSecondApp.Data;
 using SupportSecondApp.Repositories;
+using FluentValidation.Validators;
+using Microsoft.IdentityModel.Tokens;
+using SupportSecondApp.DTOs;
+using SupportSecondApp.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +27,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ISupportTaskRepository, SupportTaskRepository>();
+builder.Services.AddScoped<IValidator<ProjectCreateDto>, ProjectCreateValidator>();
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Allowlocalhost4200", policyBuilder =>

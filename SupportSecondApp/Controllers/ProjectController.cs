@@ -1,4 +1,5 @@
 using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using SupportSecondApp.DTOs;
 using SupportSecondApp.Models;
@@ -12,10 +13,12 @@ namespace SupportSecondApp.Controllers
     {
         private readonly IProjectRepository _projectRepository;
         private readonly IMapper _mapper;
-        public ProjectController(IProjectRepository projectRepository, IMapper mapper)
+        private IValidator<ProjectCreateDto> _validator;
+        public ProjectController(IProjectRepository projectRepository, IMapper mapper,IValidator<ProjectCreateDto> createValidator )
         {
             _projectRepository = projectRepository;
             _mapper = mapper;
+            _validator = createValidator;
         }
 
         [HttpGet]
@@ -29,6 +32,11 @@ namespace SupportSecondApp.Controllers
         [HttpPost]
         public async Task<ActionResult<ProjectCreateDto>> CreateProject(ProjectCreateDto projectToCreate)
         {
+            var validatorResult = await _validator.ValidateAsync(projectToCreate);
+            if (!validatorResult.IsValid)
+            {
+                return BadRequest(validatorResult.Errors);
+            }
             var project = _mapper.Map<Project>(projectToCreate);
             var projectId = await _projectRepository.CreateProject(project);
 

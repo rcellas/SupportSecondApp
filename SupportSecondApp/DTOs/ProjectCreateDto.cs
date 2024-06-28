@@ -5,7 +5,7 @@ namespace SupportSecondApp.DTOs;
 
 public class ProjectCreateDto
 {
-    [StringLength(50), Required]
+    [StringLength(1),Required ]
     public required string Name { get; set; }
 
     [StringLength(500), Required]
