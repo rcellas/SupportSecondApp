@@ -1,18 +1,22 @@
-using System.Text.Json.Serialization;
-using FluentValidation;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using SupportSecondApp.Data;
 using SupportSecondApp.Repositories;
-using FluentValidation.Validators;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
+using FluentValidation;
 using SupportSecondApp.DTOs;
 using SupportSecondApp.Validators;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using SupportSecondApp.Services;
+using System.Text.Json.Serialization;
+using SupportSecondApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Configurar los servicios de la aplicación
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -22,7 +26,6 @@ builder.Services.AddControllers()
     .AddJsonOptions(x => 
         x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -31,41 +34,54 @@ builder.Services.AddScoped<ISupportTaskRepository, SupportTaskRepository>();
 builder.Services.AddScoped<IValidator<ProjectCreateDto>, ProjectCreateValidator>();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Allowlocalhost4200", policyBuilder =>
     {
         policyBuilder.WithOrigins("http://localhost:4200")
-            .AllowAnyMethod().AllowCredentials();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
-// añadimos la autorización de los servicios
-builder.Services.AddAuthorizationBuilder();
+// Configuración de autorización
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAuthenticatedUser", policy =>
+        policy.RequireAuthenticatedUser());
+    options.AddPolicy("RequireAdminRole", policy =>
+        policy.RequireRole("Admin"));
+});
 
-//añadimos la autenticación con BearerToken y el esquema de autenticación propio de identity
-builder.Services.AddAuthentication()
-    .AddBearerToken(IdentityConstants.BearerScheme);
-
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+// Configuración de autenticación e identidad
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddApiEndpoints();
+    .AddDefaultTokenProviders();
+
+// Registrar el servicio de envío de correos
+builder.Services.AddSingleton<IEmailSender, EmailSender>();
+
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await SeedData.Initialize(services);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-
 app.UseCors("Allowlocalhost4200");
-app.MapIdentityApi<IdentityUser>();
-
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

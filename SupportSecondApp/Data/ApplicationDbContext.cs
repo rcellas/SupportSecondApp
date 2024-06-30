@@ -1,27 +1,26 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SupportSecondApp.Models;
 
-namespace SupportSecondApp.Data;
-
-public class ApplicationDbContext: IdentityDbContext<IdentityUser>
+namespace SupportSecondApp.Data
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-    }
-    public DbSet<Project> Projects { get; set; }
-    public DbSet<SupportTask> SupportTasks { get; set; }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<SupportTask> SupportTasks { get; set; }
 
-        modelBuilder.Entity<Project>()
-            .HasMany(pr => pr.SupportTasks)
-            .WithOne(sp => sp.Project)
-            .HasForeignKey(sp => sp.ProjectId);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Project>()
+                .HasMany(pr => pr.SupportTasks)
+                .WithOne(sp => sp.Project)
+                .HasForeignKey(sp => sp.ProjectId);
+        }
     }
 }
-
-
