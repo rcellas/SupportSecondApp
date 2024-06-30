@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SupportSecondApp.Data;
 using SupportSecondApp.Repositories;
 using FluentValidation.Validators;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using SupportSecondApp.DTOs;
 using SupportSecondApp.Validators;
@@ -39,6 +40,17 @@ builder.Services.AddCors(options =>
     });
 });
 
+// añadimos la autorización de los servicios
+builder.Services.AddAuthorizationBuilder();
+
+//añadimos la autenticación con BearerToken y el esquema de autenticación propio de identity
+builder.Services.AddAuthentication()
+    .AddBearerToken(IdentityConstants.BearerScheme);
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddApiEndpoints();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -48,7 +60,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseCors("Allowlocalhost4200");
+app.MapIdentityApi<IdentityUser>();
 
 app.UseHttpsRedirection();
 

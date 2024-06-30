@@ -1,10 +1,15 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SupportSecondApp.Models;
 
 namespace SupportSecondApp.Data;
 
-public class ApplicationDbContext( DbContextOptions options ) : DbContext( options )
+public class ApplicationDbContext: IdentityDbContext<IdentityUser>
 {
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    {
+    }
     public DbSet<Project> Projects { get; set; }
     public DbSet<SupportTask> SupportTasks { get; set; }
 

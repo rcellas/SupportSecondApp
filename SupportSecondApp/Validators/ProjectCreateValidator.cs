@@ -9,6 +9,6 @@ public class ProjectCreateValidator : AbstractValidator<ProjectCreateDto>
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage(FrequenceMessage.EmptyMessage)
-            .MaximumLength(50).WithMessage("El máximo texto para Name es de 50 caracteres");
+            .MaximumLength(50).WithMessage("El máximo texto para Name es de 50 caracteres").NotNull().WithMessage(FrequenceMessage.EmptyMessage);
     }
 }
