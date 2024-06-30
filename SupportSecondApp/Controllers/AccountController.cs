@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using SupportSecondApp.DTOs;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using SupportSecondApp.Models;
 
@@ -39,14 +42,40 @@ namespace SupportSecondApp.Controllers
             var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                // Aquí puedes generar y devolver un token si lo necesitas
-                return Ok(new { message = "Login successful" });
+                // Establecer cookie de sesión
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    // Añadir más claims según sea necesario
+                }, CookieAuthenticationDefaults.AuthenticationScheme)));
+
+                // Obtener roles del usuario
+                var roles = await _userManager.GetRolesAsync(user);
+
+                // Construir el objeto de respuesta
+                var response = new
+                {
+                    message = "Login successful",
+                    userInfo = new
+                    {
+                        userId = user.Id,
+                        userName = user.UserName,
+                        email = user.Email,
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        roles = roles
+                    }
+                };
+
+                return Ok(response);
             }
             else
             {
                 return Unauthorized();
             }
         }
+
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()

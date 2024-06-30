@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using SupportSecondApp.Services;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using SupportSecondApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,10 +40,26 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Allowlocalhost4200", policyBuilder =>
     {
-        policyBuilder.WithOrigins("http://localhost:4200")
+        policyBuilder.WithOrigins("http://127.0.0.1:5500")
             .AllowAnyMethod()
+            .AllowAnyHeader()
             .AllowCredentials();
     });
+});
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Tiempo de expiración de la cookie
+        options.SlidingExpiration = true; // Renovar el tiempo de expiración en cada solicitud
+    });
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Tiempo de expiración de la cookie
+    options.SlidingExpiration = true; // Renovar el tiempo de expiración en cada solicitud
 });
 
 // Configuración de autorización
