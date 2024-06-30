@@ -7,7 +7,7 @@ namespace SupportSecondApp.Services
     {
         public Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            // Implementa tu lógica de envío de correos aquí
+            // Solo queremos evitar el error de compilación
             return Task.CompletedTask;
         }
     }
