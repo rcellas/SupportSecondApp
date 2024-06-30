@@ -100,26 +100,35 @@ namespace SupportSecondApp.Controllers
                 return NotFound("User not found");
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null || !await _userManager.IsInRoleAsync(currentUser, "Admin"))
-            {
-                return Forbid();
-            }
-
             var roleExists = await _roleManager.RoleExistsAsync(model.RoleName);
             if (!roleExists)
             {
                 return NotFound("Role not found");
             }
 
-            var result = await _userManager.AddToRoleAsync(user, model.RoleName);
-            if (result.Succeeded)
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            
+            // Remover todos los roles actuales del usuario
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            if (!removeResult.Succeeded)
+            {
+                foreach (var error in removeResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return BadRequest(ModelState);
+            }
+
+            // Asignar el nuevo rol al usuario
+            var addResult = await _userManager.AddToRoleAsync(user, model.RoleName);
+            if (addResult.Succeeded)
             {
                 return Ok(new { message = $"Role '{model.RoleName}' assigned to user '{model.Email}' successfully" });
             }
             else
             {
-                foreach (var error in result.Errors)
+                foreach (var error in addResult.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
