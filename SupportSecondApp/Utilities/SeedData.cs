@@ -24,7 +24,7 @@ namespace SupportSecondApp.Data
                     roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
                 }
             }
-
+             //pasar a secrets
             var adminEmail = "admin@admin.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -37,7 +37,7 @@ namespace SupportSecondApp.Data
                     FirstName = "Admin",
                     LastName = "User"
                 };
-
+                //pasar a secrets
                 var result = await userManager.CreateAsync(adminUser, "AdminPassword123!");
                 if (result.Succeeded)
                 {

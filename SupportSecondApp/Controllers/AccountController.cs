@@ -1,12 +1,11 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using SupportSecondApp.DTOs;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
-using SupportSecondApp.Models;
+using SupportSecondApp.DTOs;
+using SupportSecondApp.Repositories;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace SupportSecondApp.Controllers
 {
@@ -14,76 +13,37 @@ namespace SupportSecondApp.Controllers
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
+        private readonly IAccountRepository _accountRepository;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public AccountController(IAccountRepository accountRepository, SignInManager<ApplicationUser> signInManager)
         {
+            _accountRepository = accountRepository;
             _signInManager = signInManager;
-            _userManager = userManager;
-            _roleManager = roleManager;
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            if (!ModelState.IsValid)
+            var result = await _accountRepository.Login(model);
+            if (result == null)
             {
-                return BadRequest(ModelState);
+                return Unauthorized(new { message = "Unauthorized" });
             }
-
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
-
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, lockoutOnFailure: false);
-            if (result.Succeeded)
-            {
-                // Establecer cookie de sesión
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Name, user.UserName),
-                    // Añadir más claims según sea necesario
-                }, CookieAuthenticationDefaults.AuthenticationScheme)));
-
-                // Obtener roles del usuario
-                var roles = await _userManager.GetRolesAsync(user);
-
-                // Construir el objeto de respuesta
-                var response = new
-                {
-                    message = "Login successful",
-                    userInfo = new
-                    {
-                        userId = user.Id,
-                        userName = user.UserName,
-                        email = user.Email,
-                        firstName = user.FirstName,
-                        lastName = user.LastName,
-                        roles = roles
-                    }
-                };
-
-                return Ok(response);
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            return Ok(result);
         }
-
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _signInManager.SignOutAsync();
+            await _signInManager.SignOutAsync(); // Desautenticar al usuario
+
+            // Eliminar la cookie de sesión explícitamente
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
             return Ok(new { message = "Logout successful" });
         }
-        
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
@@ -92,76 +52,31 @@ namespace SupportSecondApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = new ApplicationUser
+            var result = await _accountRepository.Register(model);
+
+            if (result != null)
             {
-                UserName = model.Email,
-                Email = model.Email,
-                FirstName = string.IsNullOrWhiteSpace(model.FirstName) ? "" : model.FirstName,
-                LastName = string.IsNullOrWhiteSpace(model.LastName) ? "" : model.LastName
-            };
-
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
-            {
-                // Asignar automáticamente el rol "user" al nuevo usuario
-                await _userManager.AddToRoleAsync(user, "user");
-
-                return Ok(new { message = "User registered successfully" });
+                return Ok(result);
             }
             else
             {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return BadRequest(ModelState);
+                return BadRequest();
             }
         }
-        
+
         [HttpPost("assign-role")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
+            var result = await _accountRepository.AssignRole(model);
 
-            var roleExists = await _roleManager.RoleExistsAsync(model.RoleName);
-            if (!roleExists)
-            {
-                return NotFound("Role not found");
-            }
-
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            
-            // Remover todos los roles actuales del usuario
-            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-
-            if (!removeResult.Succeeded)
-            {
-                foreach (var error in removeResult.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return BadRequest(ModelState);
-            }
-
-            // Asignar el nuevo rol al usuario
-            var addResult = await _userManager.AddToRoleAsync(user, model.RoleName);
-            if (addResult.Succeeded)
+            if (result)
             {
                 return Ok(new { message = $"Role '{model.RoleName}' assigned to user '{model.Email}' successfully" });
             }
             else
             {
-                foreach (var error in addResult.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return BadRequest(ModelState);
+                return BadRequest();
             }
         }
     }
