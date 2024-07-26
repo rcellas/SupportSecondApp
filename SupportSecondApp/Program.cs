@@ -13,7 +13,9 @@ using SupportSecondApp.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Options;
 using SupportSecondApp.Services;
+using SupportSecondApp.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+builder.Services.Configure<CloudinarySetting>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.AddControllers()
     .AddJsonOptions(x =>
@@ -35,6 +39,13 @@ builder.Services.AddScoped<ISupportTaskRepository, SupportTaskRepository>();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IValidator<ProjectCreateDto>, ProjectCreateValidator>();
+
+builder.Services.AddScoped<IFileStorage>(provider =>
+{
+    var config = provider.GetRequiredService<IOptions<CloudinarySetting>>().Value;
+    return new CloudinaryFileStorage(Options.Create(config), config.MaxFileSize);
+});
+
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 

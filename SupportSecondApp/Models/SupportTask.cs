@@ -14,6 +14,8 @@ public class SupportTask
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     
+    public string? File { get; set; }
+    
     public int ProjectId { get; set; }
     public Project Project { get; set; } = null!;
 }

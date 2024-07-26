@@ -5,6 +5,7 @@ using SupportSecondApp.Data;
 using SupportSecondApp.DTOs;
 using SupportSecondApp.Models;
 using SupportSecondApp.Repositories;
+using SupportSecondApp.Utilities;
 
 namespace SupportSecondApp.Controllers
 {
@@ -14,6 +15,7 @@ namespace SupportSecondApp.Controllers
     {
         private readonly ISupportTaskRepository _supportTaskRepository;
         private readonly IMapper _mapper;
+        private static readonly string container="supportTasks";
 
         public SupportTaskController(ISupportTaskRepository supportTaskRepository, IMapper mapper)
         {
@@ -31,13 +33,18 @@ namespace SupportSecondApp.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<int>> CreateSupportTask(SupportTaskCreateDto supportTaskToCreate, int projectId)
+        public async Task<ActionResult<int>> CreateSupportTask([FromForm]SupportTaskCreateDto supportTaskToCreate, int projectId, IFileStorage fileStorage)
         {
             var supportTask = _mapper.Map<SupportTask>(supportTaskToCreate);
+            if (supportTaskToCreate.File is not null)
+            {
+                string url = await fileStorage.Storage(container, supportTaskToCreate.File);
+                supportTask.File = url;
+            }
             supportTask.ProjectId = projectId;
-            var supportTaskId = await _supportTaskRepository.CreateSupportTask(supportTask);
+            await _supportTaskRepository.CreateSupportTask(supportTask);
 
-            return Ok(supportTaskId);
+            return Ok(supportTask);
         }
     }
 }
